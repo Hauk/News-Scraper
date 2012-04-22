@@ -24,7 +24,7 @@ import random
 dcuproxy = {'http': 'http://proxy.dcu.ie:8080'}
 
 #Store various links to different news subsections.
-sub_categ = ["http://www.irishtimes.com/feeds/rss/newspaper/index.rss","http://www.irishtimes.com/feeds/rss/newspaper/ireland.rss"]
+sub_categ = ["http://www.irishtimes.com/feeds/rss/newspaper/index.rss","http://www.irishtimes.com/feeds/rss/newspaper/ireland.rss","http://www.rte.ie/rss/news.xml"]
 
 #NewsBot Networking setup (Thanks to maK for the code)
 net = 'irc.redbrick.dcu.ie'
@@ -39,7 +39,7 @@ s.connect((net,port))
 s.send('USER '+ident+' '+net+' bla :'+owner+'\r\n')
 s.send('NICK '+nick+'\r\n')
 s.send('JOIN '+channel+'\r\n')
-s.send('PRIVMSG Titan :Good evening sir!?\r\n')
+s.send('PRIVMSG hauK : Good evening sir! Loading all modules...\r\n')
 print s.recv(4096)
 
 #strip starting : and following !redbrick.dcu.ie
@@ -85,10 +85,13 @@ while True:
 
         try:
 
-            if(line[3]==':!irishtimes'):
+            if(line[3]==':!headlines'):
+
+                #Create function to pull down correct subcategory.
+                #line[4] = sport | tech | etc, call function(return link).
 
                 #Get our raw data from from the IT RSS XML.
-                rawdata = urllib.urlopen(sub_categ[0], proxies=dcuproxy)
+                rawdata = urllib.urlopen(sub_categ[2], proxies=dcuproxy)
                 newsoutput = BeautifulStoneSoup(rawdata.read(), fromEncoding='utf-8')
 
                 headlines = []
@@ -108,11 +111,12 @@ while True:
 
                 for index, headline in enumerate(headlines):
                         try:
-                            s.send('PRIVMSG '+line[2]+' :' +'IRISHTIMES.COM: ' + links[index] + ' ' +str(headline)+ '\r\n')
+                            s.send('PRIVMSG '+line[2]+' :' +'IRISHTIMES.COM: ' + links[index] + ' ' +headline+ '\r\n')
 
                             time.sleep(0.5)
                         except UnicodeEncodeError:
                             print 'Error in coding/encoding Unicode from link/description'
+                            pass
 
         except IndexError:
             print 'Index Error in array.'
