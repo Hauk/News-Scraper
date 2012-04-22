@@ -9,7 +9,7 @@ SCRIPT_DESC = "Pull down news links and descriptions from various news sites"
 
 #Import libraries
 from BeautifulSoup import BeautifulStoneSoup
-from time import sleep
+import time
 import re
 import sys
 import urllib
@@ -83,35 +83,37 @@ while True:
                 for n in range(4, len(line)):
                         sentence += line[n]+' '
 
-        if(line[3]==':!irishtimes'):
+        try:
 
-            print "test"
+            if(line[3]==':!irishtimes'):
 
-            #Get our raw data from from the IT RSS XML.
-            rawdata = urllib.urlopen(sub_categ[1], proxies=dcuproxy)
-            newsoutput = BeautifulStoneSoup(rawdata.read(), fromEncoding='utf-8')
+                #Get our raw data from from the IT RSS XML.
+                rawdata = urllib.urlopen(sub_categ[0], proxies=dcuproxy)
+                newsoutput = BeautifulStoneSoup(rawdata.read(), fromEncoding='utf-8')
 
-            headlines = []
-            links= []
+                headlines = []
+                links= []
 
-            for headline in newsoutput.findAll('title'):
-	        headlines.append(headline.string)
+                for headline in newsoutput.findAll('title'):
+	            headlines.append(headline.string)
 
-            for link in newsoutput.findAll('link'):
-	        links.append(str(link.string))
+                for link in newsoutput.findAll('link'):
+	            links.append(str(link.string))
 
-            headlines = headlines[3:]
-            links = links[3:] 
-        
-            print "before urls"
+                headlines = headlines[3:]
+                links = links[3:] 
 
-            #make tinyurls
-            links = getTinyURLs(links)
+                #make tinyurls
+                links = getTinyURLs(links)
 
-            print "after urls"
+                for index, headline in enumerate(headlines):
+                        try:
+                            s.send('PRIVMSG '+line[2]+' :' +'IRISHTIMES.COM: ' + links[index] + ' ' +str(headline)+ '\r\n')
 
-            for index, headline in enumerate(headlines):
-                    try:
-                        s.send('PRIVMSG '+line[2]+' :' +': ' + links[index] + ' ' +str(headline)+ '\r\n')
-                    except UnicodeEncodeError:
-                        print 'Error in coding/encoding Unicode from link/description'
+                            time.sleep(0.5)
+                        except UnicodeEncodeError:
+                            print 'Error in coding/encoding Unicode from link/description'
+
+        except IndexError:
+            print 'Index Error in array.'
+            pass
