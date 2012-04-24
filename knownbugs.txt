@@ -1,0 +1,5 @@
+1. URL encoding fails: Current workaround is to catch all Uni-code errors.
+Workaround to be found.
+
+2. IRC response time is bad. Solution for this is to pull all links on the hour
+to a database.
