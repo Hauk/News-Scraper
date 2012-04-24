@@ -25,13 +25,14 @@ class Site:
 
                 for section in irishtimes.iterkeys():
                     if(self.sectionInput == section):
-                        print irishtimes[section]
                         return irishtimes[section]
 
-
-            elif(self.siteInput =='bbc'):                
+            elif(self.siteInput == 'bbc'):                
                 
                 for section in bbc.iterkeys():
                     if(self.sectionInput==section):
-                        print bbc[section]
                         return bbc[section]
+
+        #If not, return None.
+        elif(self.siteInput not in sites):
+            return None

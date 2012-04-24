@@ -20,6 +20,8 @@ import socket
 import string
 import random
 
+import sites
+
 #Set the dcu proxy for downloading the XML file.
 dcuproxy = {'http': 'http://proxy.dcu.ie:8080'}
 
@@ -61,6 +63,14 @@ def getTinyURLs(rawlinks):
 
 	return tinyurls
 
+def getSiteSection(website, section):
+    #Loop through sites comparing site.
+    #if website = this website -  search this dictionary.
+        #check dict value against section.
+        #if section = oursection.
+           # return value from dict.
+    return true
+
 #main loop
 while True:
 
@@ -87,36 +97,45 @@ while True:
 
             if(line[3]==':!headlines'):
 
-                #Create function to pull down correct subcategory.
-                #line[4] = sport | tech | etc, call function(return link).
+                #Pull target URL from IRC input.
+                targetURL = sites.Site(line[4], line[5])
+                    
+                #If a URL is found from site and section, parse link for data.
+                if(targetURL.retTargetSite() != None):
 
-                #Get our raw data from from the IT RSS XML.
-                rawdata = urllib.urlopen(sub_categ[2], proxies=dcuproxy)
-                newsoutput = BeautifulStoneSoup(rawdata.read(), fromEncoding='utf-8')
+                    #Get our raw data from from the targetURL XML
+                    rawdata = urllib.urlopen(targetURL.retTargetSite(), proxies=dcuproxy)
+                    newsoutput = BeautifulStoneSoup(rawdata.read(), fromEncoding='utf-8')
 
-                headlines = []
-                links= []
+                    headlines = []
+                    links = []
 
-                for headline in newsoutput.findAll('title'):
-	            headlines.append(headline.string)
+                    #Pull down titles and links.
+                    for headline in newsoutput.findAll('title'):
+        	            headlines.append(headline.string)
 
-                for link in newsoutput.findAll('link'):
-	            links.append(str(link.string))
+                    for link in newsoutput.findAll('link'):
+    	                links.append(str(link.string))
+    
+                    #Split rubbish off.
+                    headlines = headlines[3:]
+                    links = links[3:] 
 
-                headlines = headlines[3:]
-                links = links[3:] 
+                    #make tinyurls
+                    links = getTinyURLs(links)
 
-                #make tinyurls
-                links = getTinyURLs(links)
-
-                for index, headline in enumerate(headlines):
+                    for index, headline in enumerate(headlines):
                         try:
                             s.send('PRIVMSG '+line[2]+' :' +'IRISHTIMES.COM: ' + links[index] + ' ' +headline+ '\r\n')
-
                             time.sleep(0.5)
+
                         except UnicodeEncodeError:
-                            print 'Error in coding/encoding Unicode from link/description'
                             pass
+
+                #If no site found, send error message to channel.
+                elif(targetURL.retTargetSite() == None):
+                    s.send('PRIVMSG '+line[2]+' :' +'No site or section found. Try another site.\r\n')
+                    pass
 
         except IndexError:
             print 'Index Error in array.'
