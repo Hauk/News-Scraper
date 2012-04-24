@@ -20,13 +20,11 @@ import socket
 import string
 import random
 
+#import our news sites.
 import sites
 
 #Set the dcu proxy for downloading the XML file.
 dcuproxy = {'http': 'http://proxy.dcu.ie:8080'}
-
-#Store various links to different news subsections.
-sub_categ = ["http://www.irishtimes.com/feeds/rss/newspaper/index.rss","http://www.irishtimes.com/feeds/rss/newspaper/ireland.rss","http://www.rte.ie/rss/news.xml"]
 
 #NewsBot Networking setup (Thanks to maK for the code)
 net = 'irc.redbrick.dcu.ie'
@@ -62,14 +60,6 @@ def getTinyURLs(rawlinks):
 		tinyurls.append(turesult)
 
 	return tinyurls
-
-def getSiteSection(website, section):
-    #Loop through sites comparing site.
-    #if website = this website -  search this dictionary.
-        #check dict value against section.
-        #if section = oursection.
-           # return value from dict.
-    return true
 
 #main loop
 while True:
