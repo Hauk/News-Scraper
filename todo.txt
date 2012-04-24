@@ -1,0 +1,7 @@
+Create a database called newslinks. Design table for effective searching.
+-Add table.
+-Come up with decent table structure.
+-Write function to pull down links and write to the database every hour.
+-Possibly put this in its own class?
+-Would keep the main controller tidier.
+
