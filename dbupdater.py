@@ -7,6 +7,7 @@ SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "Script to run an hourly update of headlines/links in newsbot database on Titan."
 
 from BeautifulSoup import BeautifulStoneSoup
+
 import re
 import sys
 import urllib
@@ -30,11 +31,9 @@ def getTinyURLs(rawlinks):
     return tinyurls
 
 #function checks if site exists as a table in the DB.
-def checkTableInDB(sites, tabledict):
-    
-    for index, item in enumerate(tabledict):        
-        if sites[index] not in tabledict:
-            return False
+def checkTableInDB(site, tabledict):
+    if site not in tabledict:
+        return False
 
     return True
 
@@ -52,13 +51,27 @@ rsslinks = []
 
 #This query pulls all the data from the news_links db and adds them to the
 #lists below.
-feedquery = """SELECT * FROM newsbot_feeds WHERE category='technology';"""
+feedquery = """SELECT * FROM newsbot_feeds;"""
 
 #Execute the query.
 cursor.execute(feedquery)
 feedlinksdata = cursor.fetchall()
 
-#Extract the row data and append it to our lists.
+#Drop all tables except the feeds table.
+gettables = """SHOW TABLES;"""
+cursor.execute(gettables)
+
+tables = cursor.fetchall()
+
+for table in tables:
+
+    if table["Tables_in_newsbot"] != 'newsbot_feeds':
+        deletetable = """DROP TABLE """ + table["Tables_in_newsbot"] + """;"""
+        cursor.execute(deletetable)
+        print "Dropping table: " + table["Tables_in_newsbot"] + "..."
+
+
+#Extract the feeds data from the database and append it to our lists.
 for row in feedlinksdata:
 
     site = row["site"]
@@ -68,6 +81,8 @@ for row in feedlinksdata:
     sites.append(site)
     categories.append(category)
     rsslinks.append(link)
+
+print sites
 
 #Parse <link> and <title> from XML feed.
 for index, rssindex in enumerate(rsslinks):
@@ -93,9 +108,9 @@ for index, rssindex in enumerate(rsslinks):
 
     #make tinyurls
     xmllinks = getTinyURLs(xmllinks)
-        
-    for test, testIndex in enumerate(xmllinks):
-        print sites[index] + " " + categories[index] + " " + testIndex + " " + headlines[test]
+
+    #for test, testIndex in enumerate(xmllinks):
+    #            print sites[index] + " " + categories[index] + " " + testIndex + " " + headlines[test]
 
     #query checks if a table exists for that site in the database. If not,
     #create a table and insert values into that table.
@@ -109,10 +124,26 @@ for index, rssindex in enumerate(rsslinks):
     for row in tablelist:
         tnames.append(row["Tables_in_newsbot"])
 
-    #Check if the site table exists or not.
-    if not checkTableInDB(sites, tnames):
-        print "table does not exist"
+    print tnames
 
-        #Create the table for the site.
+    #Create table if it doesn't exist.
+    for site in sites:
 
+            addsitequery = """CREATE TABLE IF NOT EXISTS """ + site + """ ( site VARCHAR(200), category
+            VARCHAR(100), links VARCHAR(200), headlines VARCHAR(200));"""
 
+            cursor.execute(addsitequery)
+            print "Added site table to database..."
+
+#Insert the data retrieved into the relevant table.
+    for linky, headline in enumerate(headlines):
+        try:
+            insertquery = """INSERT INTO """ + sites[index] + """ VALUES (%s, %s, %s, %s);"""
+
+            cursor.execute(insertquery, (sites[index], categories[index],
+            xmllinks[linky], headline))
+
+            print "Headline and link added to database for: " + sites[index] + ' ' + categories[index]
+        except UnicodeEncodeError:
+            print "Error in unicode parsing."
+            pass
