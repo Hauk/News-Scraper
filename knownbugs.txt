@@ -1,5 +1,7 @@
 1. URL encoding fails: Current workaround is to catch all Uni-code errors.
 Workaround to be found.
 
-2. IRC response time is bad. Solution for this is to pull all links on the hour
-to a database.
+2. dbupdater.py is in a currently functioning state. It fails over when the XML
+of the RSS feed is different to what it expects. I need to add more code where
+multiple site structures are handled so the soup knows what to look for. Still a
+WIP. 80% fixed.
