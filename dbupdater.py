@@ -82,8 +82,6 @@ for row in feedlinksdata:
     categories.append(category)
     rsslinks.append(link)
 
-print sites
-
 #Parse <link> and <title> from XML feed.
 for index, rssindex in enumerate(rsslinks):
     
@@ -109,31 +107,14 @@ for index, rssindex in enumerate(rsslinks):
     #make tinyurls
     xmllinks = getTinyURLs(xmllinks)
 
-    #for test, testIndex in enumerate(xmllinks):
-    #            print sites[index] + " " + categories[index] + " " + testIndex + " " + headlines[test]
-
     #query checks if a table exists for that site in the database. If not,
     #create a table and insert values into that table.
-    siteintable = """SHOW TABLES;"""
-    cursor.execute(siteintable)
-
-    tablelist = cursor.fetchall()
-
-    tnames = []
-
-    for row in tablelist:
-        tnames.append(row["Tables_in_newsbot"])
-
-    print tnames
-
-    #Create table if it doesn't exist.
     for site in sites:
 
             addsitequery = """CREATE TABLE IF NOT EXISTS """ + site + """ ( site VARCHAR(200), category
             VARCHAR(100), links VARCHAR(200), headlines VARCHAR(200));"""
 
             cursor.execute(addsitequery)
-            print "Added site table to database..."
 
 #Insert the data retrieved into the relevant table.
     for linky, headline in enumerate(headlines):
@@ -143,7 +124,6 @@ for index, rssindex in enumerate(rsslinks):
             cursor.execute(insertquery, (sites[index], categories[index],
             xmllinks[linky], headline))
 
-            print "Headline and link added to database for: " + sites[index] + ' ' + categories[index]
         except UnicodeEncodeError:
             print "Error in unicode parsing."
             pass
