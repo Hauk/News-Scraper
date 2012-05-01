@@ -14,14 +14,14 @@ import re
 import sys
 import urllib
 import urllib2
+import MySQLdb as mdb
 from mechanize import Browser
 
 import socket
 import string
 import random
 
-#import our news sites.
-import sites
+import dbconfig
 
 #Set the dcu proxy for downloading the XML file.
 dcuproxy = {'http': 'http://proxy.dcu.ie:8080'}
@@ -49,17 +49,9 @@ def getName(x):
         y = x[1:]
         return y
 
-#function to convert rawlinks to TinyURLs
-def getTinyURLs(rawlinks):
-	tinyurls = []
-
-	#loop links, create TinyURL and append to tinyurls list
-        for item in rawlinks:
-		tinyurlhttp = "http://tinyurl.com/api-create.php?url="				
-		turesult = urllib.urlopen(tinyurlhttp + item, proxies=dcuproxy).read()
-		tinyurls.append(turesult)
-
-	return tinyurls
+#Connect to the MySQL database on Titan.
+titanconn = mdb.connect('136.206.16.140', dbconfig.user, dbconfig.dbpass, 'newsbot')
+cursor = titanconn.cursor(mdb.cursors.DictCursor)
 
 #main loop
 while True:
@@ -83,50 +75,34 @@ while True:
                 for n in range(4, len(line)):
                         sentence += line[n]+' '
 
-        try:
-
-            if(line[3]==':!headlines'):
-
-                #Pull target URL from IRC input.
-                targetURL = sites.Site(line[4], line[5])
-                    
-                #If a URL is found from site and section, parse link for data.
-                if(targetURL.retTargetSite() != None):
-
-                    #Get our raw data from from the targetURL XML
-                    rawdata = urllib.urlopen(targetURL.retTargetSite(), proxies=dcuproxy)
-                    newsoutput = BeautifulStoneSoup(rawdata.read(), fromEncoding='utf-8')
-
-                    headlines = []
-                    links = []
-
-                    #Pull down titles and links.
-                    for headline in newsoutput.findAll('title'):
-        	            headlines.append(headline.string)
-
-                    for link in newsoutput.findAll('link'):
-    	                links.append(str(link.string))
+        if(line[3]==':!headlines'):
+                
+            try:
+                #Pull down headlines and links from database
+                newsquery = """SELECT * FROM  """ + line[4] + """ WHERE """ + line[4] + """.category=%s;"""
+                cursor.execute(newsquery, line[5])
+                newslinks = cursor.fetchall()
     
-                    #Split rubbish off.
-                    headlines = headlines[3:]
-                    links = links[3:] 
+                #Select all sites for error checking.
+                sitesquery = """SELECT site FROM newsbot_feeds;"""
+                site = cursor.execute(sitesquery)
+                validsites = cursor.fetchall()
+                valsites = []
 
-                    #make tinyurls
-                    links = getTinyURLs(links)
+                for row in validsites:
+                    valsites.append(row["site"])
+        
+                if line[4] in valsites: 
+   
+                    for link in newslinks:
+                        site = link["site"]
+                        linky = link["links"]
+                        headline = link["headlines"]
+    
+                        s.send('PRIVMSG '+line[2]+' :' + site + ': ' + linky + ' ' + headline + ' \r\n')
+                        time.sleep(1.4)
 
-                    for index, headline in enumerate(headlines):
-                        try:
-                            s.send('PRIVMSG '+line[2]+' :' +'IRISHTIMES.COM: ' + links[index] + ' ' +headline+ '\r\n')
-                            time.sleep(0.5)
-
-                        except UnicodeEncodeError:
-                            pass
-
-                #If no site found, send error message to channel.
-                elif(targetURL.retTargetSite() == None):
-                    s.send('PRIVMSG '+line[2]+' :' +'No site or section found. Try another site.\r\n')
-                    pass
-
-        except IndexError:
-            print 'Index Error in array.'
-            pass
+            except (IndexError, mdb.Error):
+                name = line[0]
+                user = getName(name)
+                s.send('PRIVMSG '+line[2]+' :'+user+':' + ' No feeds found for: ' + line[4] + '. Try another site or request it be added.'+ '\r\n')
