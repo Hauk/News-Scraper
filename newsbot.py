@@ -100,9 +100,14 @@ while True:
                         headline = link["headlines"]
     
                         s.send('PRIVMSG '+line[2]+' :' + site + ': ' + linky + ' ' + headline + ' \r\n')
-                        time.sleep(1.4)
+                        time.sleep(2)
 
-            except (IndexError, mdb.Error):
+            except mdb.Error:
                 name = line[0]
                 user = getName(name)
                 s.send('PRIVMSG '+line[2]+' :'+user+':' + ' No feeds found for: ' + line[4] + '. Try another site or request it be added.'+ '\r\n')
+
+            except IndexError:
+                name = line[0]
+                user = getName(name)
+                s.send('PRIVMSG '+line[2]+' :'+user+':' + ' Usage is !headlines site category.'+ '\r\n')
