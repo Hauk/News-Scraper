@@ -75,39 +75,43 @@ while True:
                 for n in range(4, len(line)):
                         sentence += line[n]+' '
 
-        if(line[3]==':!headlines'):
-                
-            try:
-                #Pull down headlines and links from database
-                newsquery = """SELECT * FROM  """ + line[4] + """ WHERE """ + line[4] + """.category=%s;"""
-                cursor.execute(newsquery, line[5])
-                newslinks = cursor.fetchall()
+        try:
+            if(line[3]==':!news'):
+                    
+                try:
+                    #Pull down headlines and links from database
+                    newsquery = """SELECT * FROM  """ + line[4] + """ WHERE """ + line[4] + """.category=%s;"""
+                    cursor.execute(newsquery, line[5])
+                    newslinks = cursor.fetchall()
     
-                #Select all sites for error checking.
-                sitesquery = """SELECT site FROM newsbot_feeds;"""
-                site = cursor.execute(sitesquery)
-                validsites = cursor.fetchall()
-                valsites = []
+                    #Select all sites for error checking.
+                    sitesquery = """SELECT site FROM newsbot_feeds;"""
+                    site = cursor.execute(sitesquery)
+                    validsites = cursor.fetchall()
+                    valsites = []
 
-                for row in validsites:
-                    valsites.append(row["site"])
+                    for row in validsites:
+                        valsites.append(row["site"])
         
-                if line[4] in valsites: 
+                    if line[4] in valsites: 
    
-                    for link in newslinks:
-                        site = link["site"]
-                        linky = link["links"]
-                        headline = link["headlines"]
+                        for link in newslinks:
+                            site = link["site"]
+                            linky = link["links"]
+                            headline = link["headlines"]
     
-                        s.send('PRIVMSG '+line[2]+' :' + site + ': ' + linky + ' ' + headline + ' \r\n')
-                        time.sleep(2)
+                            s.send('PRIVMSG '+line[2]+' :' + site + ': ' + linky + ' ' + headline + ' \r\n')
+                            time.sleep(2)
 
-            except mdb.Error:
-                name = line[0]
-                user = getName(name)
-                s.send('PRIVMSG '+line[2]+' :'+user+':' + ' No feeds found for: ' + line[4] + '. Try another site or request it be added.'+ '\r\n')
+                except mdb.Error:
+                    name = line[0]
+                    user = getName(name)
+                    s.send('PRIVMSG '+line[2]+' :'+user+':' + ' No feeds found for: ' + line[4] + '. Try another site or request it be added.'+ '\r\n')
 
-            except IndexError:
-                name = line[0]
-                user = getName(name)
-                s.send('PRIVMSG '+line[2]+' :'+user+':' + ' Usage is !headlines site category.'+ '\r\n')
+                except IndexError:
+                    name = line[0]
+                    user = getName(name)
+                    s.send('PRIVMSG '+line[2]+' :'+user+':' + ' Usage is !headlines site category.'+ '\r\n')
+
+        except IndexError:
+            pass
