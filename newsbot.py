@@ -115,3 +115,98 @@ while True:
 
         except IndexError:
             pass
+
+        #This piece of code allows users to return a list of categories based on
+        #a site they submit.
+        try:
+            if(line[3]==':!news' and line[4] is not None and line[5]=='categories'):
+                
+                sitecategs = """SELECT category FROM newsbot_feeds WHERE site=%s;"""
+
+                categories = []
+
+                cursor.execute(sitecategs, line[4])
+
+                categs = cursor.fetchall()
+
+                #Get all categories
+                for row in categs:
+                    categories.append(row["category"])
+
+                appendcat = ', '.join(categories)
+
+                name = line[0]
+                user = getName(name)
+
+                s.send('PRIVMSG ' + line[2]+' :' +user+': ' + 'Categories for ' +line[4]+ ' are: ' + appendcat + '\r\n')
+
+        except mdb.Error:
+            name = line[0]
+            user = getName(name)
+            s.send('PRIVMSG '+line[2]+' :'+user+':' + ' No categories found for: ' + line[4] + '. Try another site.'+ '\r\n')
+
+        except IndexError:
+            pass
+
+
+
+
+        #Basic one word search functionality.
+        #Could do with a re-think for code efficiency.
+        try:
+            if(line[3]==':!newssearch' and line[4] is not None):
+            
+                sites = []
+                links = []
+                headlines = []
+
+                tablesquery = """SHOW TABLES;"""
+
+                cursor.execute(tablesquery)
+                
+                tables = cursor.fetchall()                           
+
+                #Empty list to store sites.
+                valsites = []
+
+                #Get all sites from query results.
+                for row in tables:
+                    valsites.append(row["Tables_in_newsbot"])
+
+                #Loop through all sites and find search key.
+                for tabs in valsites:
+
+                    if tabs != 'newsbot_feeds':
+
+                        #Create query to pull headlines from database
+                        searchresults = """SELECT site, links, headlines FROM """ + tabs  + """;"""
+                        cursor.execute(searchresults)
+
+                        searchdata = cursor.fetchall()
+
+                        #Pull headlind and split() for searching.
+                        for row in searchdata:
+                            headlinetokens = row["headlines"]
+                            headlinetokens = headlinetokens.split()
+
+                            #If search token in headline, append news item.
+                            if line[4] in headlinetokens:
+                                sites.append(row["site"])
+                                links.append(row["links"])
+                                headlines.append(row["headlines"])
+
+                #Send all results to the channel.
+                for index, headline in enumerate(headlines):
+                    s.send('PRIVMSG '+line[2]+' :' + sites[index] + ': ' + links[index] + ' ' +headline + ' \r\n')
+                    time.sleep(2)
+            
+            elif(line[3]==':!newssearch' and line[4] is None):
+                print "aww"
+                name = line[0]
+                user = getName(name)
+                s.send('PRIVMSG '+line[2]+' :'+user+':' + ' Usage is !newssaerch mysearchitem ' + '\r\n')
+            
+            else:
+               print "error" + line[4]
+        except:
+            pass
