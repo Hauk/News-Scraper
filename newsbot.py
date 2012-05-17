@@ -76,7 +76,7 @@ while True:
                         sentence += line[n]+' '
 
         try:
-            if(line[3]==':!news'):
+            if(line[3]==':!news' and line[4] is not None and line[5]!='categories'):
                     
                 try:
                     #Pull down headlines and links from database
@@ -122,34 +122,42 @@ while True:
             if(line[3]==':!news' and line[4] is not None and line[5]=='categories'):
                 
                 sitecategs = """SELECT category FROM newsbot_feeds WHERE site=%s;"""
+                sitesquery = """SELECT site from newsbot_feeds;"""
 
                 categories = []
+                sites = []
 
                 cursor.execute(sitecategs, line[4])
 
                 categs = cursor.fetchall()
 
+                cursor.execute(sitesquery)
+
+                getsites = cursor.fetchall()
+
+                for row in getsites:
+                    sites.append(row["site"])
+
                 #Get all categories
                 for row in categs:
                     categories.append(row["category"])
+                
+                if line[4] in sites:
 
-                appendcat = ', '.join(categories)
+                    appendcat = ', '.join(categories)
 
-                name = line[0]
-                user = getName(name)
+                    name = line[0]
+                    user = getName(name)
 
-                s.send('PRIVMSG ' + line[2]+' :' +user+': ' + 'Categories for ' +line[4]+ ' are: ' + appendcat + '\r\n')
+                    s.send('PRIVMSG ' + line[2]+' :' +user+': ' + 'Categories for ' +line[4]+ ' are: ' + appendcat + '\r\n')
 
-        except mdb.Error:
-            name = line[0]
-            user = getName(name)
-            s.send('PRIVMSG '+line[2]+' :'+user+':' + ' No categories found for: ' + line[4] + '. Try another site.'+ '\r\n')
+                else:
+                    name = line[0]
+                    user = getName(name)
+                    s.send('PRIVMSG ' + line[2]+' :' +user+': ' + 'No categories found for site: ' +line[4]+ '.' + '\r\n')
 
-        except IndexError:
+        except (mdb.Error, IndexError):
             pass
-
-
-
 
         #Basic one word search functionality.
         #Could do with a re-think for code efficiency.
